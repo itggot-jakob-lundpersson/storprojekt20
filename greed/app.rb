@@ -10,46 +10,41 @@ get('/') do
     slim(:index)
 end
 
-post('/login') do 
-    db=SQLite3::Database.new('db/greed.db')
+post('/login') do
+    db = connect_db("greed")
     username = params["l_username"]
     password = params["l_password"]
     
-    check = db.execute("SELECT password, id FROM users WHERE name=?", username)
-    
-    if check.empty?
-        redirect("/")
-    end
-
-    password_digest = check[0][0] #db.execute("SELECT password FROM users WHERE name=?", username)
-    p password_digest
-    user_id = db.execute("SELECT id FROM users WHERE name=?", username)
-    
-
-    if BCrypt::Password.new(password_digest) == password
-        session[:user_id] = user_id[0][0]
-        session[:username] = username
-        redirect("/users/#{session[:username]}")
-    else
+    if username!="" && password!=""
+        check = retrieve_user_id(db, username).first
         
+        
+        password_hash = retrieve_user_password(db, username)
+        user_id = check
+        
+        
+        if password_verification(password_hash, password)
+            session[:user_id] = user_id.first
+            session[:username] = username
+            session[:role] = retrieve_role(db, session[:user_id])[0][0]
+            redirect("/users/#{session[:username]}")
+        else
+            redirect("/")
+        end
     end
     
-
-    redirect("users/index")
+    redirect("/")
 end
 
 post('/register') do 
-    db=SQLite3::Database.new('db/greed.db')
+    db=connect_db("greed")
     username = params["r_username"]
     password = params["r_password"]
     
-    result = db.execute("SELECT id FROM users WHERE name=?", username)
+    result = register_user(db, username, password)
     
     if result.empty?
-        password_digest = BCrypt::Password.create(password)
-        p password_digest
-        db.execute("INSERT INTO users(name, password, role) VALUES (?,?,?)", [username, password_digest, "user"])
-        session[:user_id] = db.execute("SELECT ID FROM users WHERE name=?", username)[0][0]
+        session[:user_id] = retrieve_user_id(db, username)
         session[:username] = username
     else
         redirect("/")
@@ -67,18 +62,60 @@ end
 
 get('/users/:username') do
     result = "db.execute"
-
-    slim(:"users/show", locals:{info:result})
+    
+    slim(:"users/show") #, locals:{info:result}
 end
 
-get('/users/') do 
-
+get('/login') do 
     
-    slim(:"users/index")
+    
+    slim(:"login")
 end
 
-get('/cards/') do 
+get('/cards/') do
+    db = connect_db("greed")
+    if session[:role] == "admin"
 
+
+    else 
+
+        
+    end
     
-    slim(:"users/index")
+    slim(:"cards/index")
+end
+
+get('/cards/new') do 
+    
+    
+    slim(:"cards/new")
+end
+
+
+get('/trades/') do 
+    
+    
+    slim(:"trades/index")
+end
+
+post('/create_template') do
+    db = connect_db("greed")
+
+    name = params["name"]
+    rarity = params["rarity"]
+    description = params["description"]
+    tags = params["tags"]
+    collection = params["collection"]
+    image = params["image_link"]
+
+    if template_name_exists(db, name)
+        template_creation = create_template(db, name, rarity, description, tags, collection, image)
+
+
+
+    else
+
+        redirect('/cards/')
+    end
+
 end
