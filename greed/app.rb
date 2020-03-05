@@ -75,10 +75,10 @@ end
 get('/cards/') do
     db = connect_db("greed")
     if session[:role] == "admin"
-
-
+        
+        
     else 
-
+        
         
     end
     
@@ -100,22 +100,39 @@ end
 
 post('/create_template') do
     db = connect_db("greed")
-
-    name = params["name"]
+    
+    name = params["template_name"]
     rarity = params["rarity"]
     description = params["description"]
     tags = params["tags"]
     collection = params["collection"]
     image = params["image_link"]
-
-    if template_name_exists(db, name)
-        template_creation = create_template(db, name, rarity, description, tags, collection, image)
-
-
-
+    
+    if template_name_validation(db, name)
+        create_template(db, name, rarity, description, tags, collection, image)
+        
+        
+        redirect('/cards/new')
     else
+        
 
-        redirect('/cards/')
+        
+        redirect("/users/#{session[:username]}")
+    end
+    
+end
+
+post('/create_cards') do
+    db = connect_db("greed")
+    name = params["card_name"]
+    amount = params["card_amount"]
+
+    if template_name_validation(db, name)
+        create_cards(db, name, amount)
+
+
     end
 
+
+    redirect('/cards/new')
 end

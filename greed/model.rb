@@ -34,7 +34,7 @@ end
 
 def retrieve_role(db, user_id)
     result = db.execute("SELECT role FROM users WHERE id=?", user_id)
-    p result
+    
     return result
 end
 
@@ -49,4 +49,38 @@ def password_verification(password_hash, password)
     end
 
     return verification
+end
+
+def template_name_validation(db, template_name)
+    exists = db.execute("SELECT name FROM template WHERE name=?", template_name)
+
+    if exists==[]
+        result = true
+        
+    else
+        result = false
+        
+
+    end
+
+
+    return result
+end
+
+def create_template(db, template_name, rarity, description, tags, collection, image_link)
+    db.execute("INSERT INTO template(name, rarity, description, tag, collection, image) VALUES (?,?,?,?,?,?)", [template_name, rarity, description, tags, collection, image_link])
+    
+
+end
+
+def create_cards(db, template_name, amount)
+    db.execute("UPDATE template(amount) VALUES (?) WHERE name=", amount)
+    i = 0
+    history = Time.now.to_s
+    while i <= amount.to_i
+        db.execute("INSERT INTO card(template, history) VALUES (?,?)", [template_name, history])
+        i=i+1
+    end
+
+
 end
