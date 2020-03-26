@@ -73,11 +73,14 @@ def create_template(db, template_name, rarity, description, tags, collection, im
 
 end
 
-def create_cards(db, template_name, amount)
-    db.execute("UPDATE template(amount) VALUES (?) WHERE name=", amount)
+def create_cards(db, template_name, card_amount)
+    old_amount = db.execute("SELECT amount FROM template where name=?", [template_name])
+    new_card_amount = card_amount.to_i + old_amount[0][0].to_i
+
+    db.execute("UPDATE template SET amount = ? WHERE name = ?", [new_card_amount, template_name])
     i = 0
     history = Time.now.to_s
-    while i <= amount.to_i
+    while i <= card_amount.to_i
         db.execute("INSERT INTO card(template, history) VALUES (?,?)", [template_name, history])
         i=i+1
     end

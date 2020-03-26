@@ -125,10 +125,10 @@ end
 post('/create_cards') do
     db = connect_db("greed")
     name = params["card_name"]
-    amount = params["card_amount"]
+    card_amount = params["card_amount"]
 
-    if template_name_validation(db, name)
-        create_cards(db, name, amount)
+    if template_name_validation(db, name) == false
+        create_cards(db, name, card_amount)
 
 
     end
