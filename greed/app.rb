@@ -74,6 +74,12 @@ end
 
 get('/cards/') do
     db = connect_db("greed")
+
+
+    session[:cards] = show_all_cards(db)
+    if user_owns_cards(db, session[:username])
+        session[:your_cards] = show_user_cards(db, session[:username])
+    end
     if session[:role] == "admin"
         
         
@@ -93,9 +99,31 @@ end
 
 
 get('/trades/') do 
-    
+    db = connect_db("greed")
+    session[:trades] = show_all_trades(db)
+    session[:user_trades] = show_user_trades(db, session[:username])
     
     slim(:"trades/index")
+end
+
+get('/trades/new') do 
+    
+    
+    slim(:"trades/new")
+end
+
+post('/create_trade') do
+    db = connect_db("greed")
+
+    cards = params["card_id"]
+    name = params["trade_name"]
+    expiration = params["expiration"]
+    users = session[:username]
+    if trade_ownership_verified(db, cards, users)
+        create_trade(db, cards, name, users, expiration)
+    end
+    
+    redirect('/trades/new')
 end
 
 post('/create_template') do
@@ -126,10 +154,11 @@ post('/create_cards') do
     db = connect_db("greed")
     name = params["card_name"]
     card_amount = params["card_amount"]
+    owner = params["owner"]
 
     if template_name_validation(db, name) == false
-        create_cards(db, name, card_amount)
-
+        create_cards(db, name, card_amount, owner)
+        
 
     end
 
