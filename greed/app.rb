@@ -101,8 +101,12 @@ end
 get('/trades/') do 
     db = connect_db("greed")
     session[:trades] = show_all_trades(db)
-    session[:user_trades] = show_user_trades(db, session[:username])
-    
+    if has_trades(db, session[:username])
+        session[:user_trades] = show_user_trades(db, session[:username])[0]
+        if trades_have_offers(db, show_user_trades(db, session[:username])[0][2])
+            session[:user_offers] = show_user_offers(db, session[:username])[0][0]
+        end
+    end
     slim(:"trades/index")
 end
 
@@ -110,6 +114,23 @@ get('/trades/new') do
     
     
     slim(:"trades/new")
+end
+
+get('/trades/:show_trade') do
+
+
+    slim(:"trades/show")
+end
+
+post('/show_trade') do
+    db = connect_db("greed")
+    show_trade_id = params["show_trade_id"]
+
+    session[:show_trade] = get_trade_name(db, show_trade_id)[0][0]
+    session[:specific_trade] = get_trade(db, show_trade_id)[0]
+    
+
+    redirect("trades/#{session[:show_trade]}")
 end
 
 post('/create_trade') do
@@ -124,6 +145,19 @@ post('/create_trade') do
     end
     
     redirect('/trades/new')
+end
+
+post('/join_trade') do
+    db = connect_db("greed")
+
+    cards = params["card_id"]
+    users = session[:username]
+    reciever = session[:specific_trade][2]
+    if trade_ownership_verified(db, cards, users)
+        join_trade(db, cards, users, reciever)
+    end
+    
+    redirect('/trades/')
 end
 
 post('/create_template') do

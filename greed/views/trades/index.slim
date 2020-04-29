@@ -1,5 +1,11 @@
 a href = "/users/#{session[:username]}"  Back
 a href = "/trades/new" Create trade
+h2  Join trade:
+<form action = "/show_trade" method = "post">
+    <input type="text" name="show_trade_id" placeholder="trade ID">
+    <input type="submit" value="show_trade">
+</form>
 
 h3 All trades: #{session[:trades]}
 h3 Your trades: #{session[:user_trades]}
+h3 Your offers: #{session[:user_offers]}

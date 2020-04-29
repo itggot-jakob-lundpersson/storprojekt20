@@ -144,8 +144,10 @@ end
 
 def create_trade(db, cards, name, users, expiration)
     
-    db.execute("INSERT INTO trades(cards, name, users, expiration) VALUES (?,?,?,?)", [cards, name, users, expiration])
-
+    db.execute("INSERT INTO trades(cards, name, sender, expiration) VALUES (?,?,?,?)", [cards, name, users, expiration])
+    user_id = retrieve_user_id(db, users)
+    trade_id = db.execute("SELECT max(id) FROM trades")[0][0]
+    db.execute("INSERT INTO user_trade_relation(user, trade) VALUES (?,?)", [user_id, trade_id])
 end
 
 def show_all_trades(db)
@@ -154,7 +156,13 @@ def show_all_trades(db)
 end
 
 def show_user_trades(db, username)
-    return db.execute("SELECT * FROM trades WHERE users=?", username)
+    return db.execute("SELECT * FROM trades WHERE sender=?", username) 
+
+end
+
+def show_user_offers(db, username) #THIS BROKEN
+    user_trades = db.execute("SELECT id FROM trades WHERE sender=?", username)[0][0]
+    return db.execute("SELECT * FROM offers WHERE reciever=?", user_trades)
 
 end
 
@@ -166,4 +174,58 @@ def user_owns_cards(db, username)
     end
 
     return does
+end
+
+def trade_ownership_verified(db, cards, user)
+    result = false
+    owned_cards = db.execute("SELECT cards FROM users WHERE name=?", user)[0][0]
+    owned_cards = owned_cards.split(", ")
+    p owned_cards
+    selected_cards = cards.split(", ")
+    if selected_cards - owned_cards == []
+        result = true
+    end
+
+    return result
+end
+
+
+def get_trade_name(db, trade_id)
+    result = db.execute("SELECT name FROM trades WHERE id=?", trade_id)
+
+    return result
+end
+
+
+def get_trade(db, trade_id)
+
+    result = db.execute("SELECT * FROM trades WHERE id=?", trade_id)
+
+    return result
+end
+
+def has_trades(db, username)
+    result = false
+    if db.execute("SELECT * FROM trades WHERE sender=?", username) != []
+        result = true
+    end
+
+    return result
+
+end
+
+def join_trade(db, cards, user, reciever_trade)
+    user_id = retrieve_user_id(db, user)[0][0]
+    db.execute("INSERT INTO offers(cards, sender, reciever) VALUES(?,?,?)", [cards, user, reciever_trade])
+    db.execute("INSERT INTO user_trade_relation(user, trade) VALUES (?,?)", [user_id, reciever_trade])
+
+end
+
+def trades_have_offers(db, trade_id)
+    result = false
+    if db.execute("SELECT * FROM offers WHERE reciever=?", trade_id) == nil
+        result = true
+    end
+    
+    return result
 end

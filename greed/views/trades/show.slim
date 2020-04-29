@@ -1,0 +1,10 @@
+h3 Specific trade: #{session[:specific_trade]}
+
+<form action = "/join_trade" method = "post">
+    <input type="text" name="card_id" placeholder="cards to trade">
+    
+    <input type="submit" value="join_trade">
+
+</form>
+
+a href = "/users/#{session[:username]}"  Back
