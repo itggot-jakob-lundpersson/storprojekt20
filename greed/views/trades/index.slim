@@ -9,3 +9,8 @@ h2  Join trade:
 h3 All trades: #{session[:trades]}
 h3 Your trades: #{session[:user_trades]}
 h3 Your offers: #{session[:user_offers]}
+h2 Accept offer:
+<form action = "/accept_offer" method = "post">
+    <input type="text" name="offer_id" placeholder="offer ID">
+    <input type="submit" value="accept_offer">
+</form>

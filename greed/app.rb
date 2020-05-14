@@ -102,9 +102,10 @@ get('/trades/') do
     db = connect_db("greed")
     session[:trades] = show_all_trades(db)
     if has_trades(db, session[:username])
-        session[:user_trades] = show_user_trades(db, session[:username])[0]
-        if trades_have_offers(db, show_user_trades(db, session[:username])[0][2])
-            session[:user_offers] = show_user_offers(db, session[:username])[0][0]
+        session[:user_trades] = show_user_trades(db, session[:username])
+        if trades_have_offers(db, session[:user_trades])
+            p "have offers"
+            session[:user_offers] = show_user_offers(db, session[:username])
         end
     end
     slim(:"trades/index")
@@ -157,6 +158,16 @@ post('/join_trade') do
         join_trade(db, cards, users, reciever)
     end
     
+    redirect('/trades/')
+end
+
+post('/accept_offer') do
+    db = connect_db("greed")
+
+    offer_id = params["offer_id"]
+    user = session[:user_id]
+    accept_offer(db, offer_id, user)
+
     redirect('/trades/')
 end
 

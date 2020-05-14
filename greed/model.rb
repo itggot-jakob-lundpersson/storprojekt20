@@ -160,9 +160,21 @@ def show_user_trades(db, username)
 
 end
 
-def show_user_offers(db, username) #THIS BROKEN
-    user_trades = db.execute("SELECT id FROM trades WHERE sender=?", username)[0][0]
-    return db.execute("SELECT * FROM offers WHERE reciever=?", user_trades)
+def show_user_offers(db, username)
+    user_trades = db.execute("SELECT id FROM trades WHERE sender=?", username)
+    list = []
+    i = 0
+
+    while i < user_trades.length
+        current = db.execute("SELECT * FROM offers WHERE reciever=?", user_trades[i])
+        if current != []
+            list << current
+        end
+
+        i += 1
+    end
+    p list
+    return list
 
 end
 
@@ -223,9 +235,47 @@ end
 
 def trades_have_offers(db, trade_id)
     result = false
-    if db.execute("SELECT * FROM offers WHERE reciever=?", trade_id) == nil
-        result = true
+    p trade_id
+
+    i = 0
+
+    while i < trade_id.length
+        if db.execute("SELECT * FROM offers WHERE reciever=?", trade_id[i][2]) != nil
+            result = true
+        end
+        i+=1
     end
-    
+
     return result
+end
+
+def accept_offer(db, offer, user) #Fixa med inerjoin?
+
+    offer_cards = db.execute("SELECT cards FROM offers WHERE id=?", offer)[0][0].split(", ")
+    offer_sender = db.execute("SELECT sender FROM offers WHERE id=?", offer)[0][0]
+    reciever = db.execute("SELECT reciever FROM offers WHERE id=?", offer)[0][0]
+    #user_reciever = db.execute("SELECT sender FROM trades WHERE id=?", reciever)[0][0]
+    trade_cards = db.execute("SELECT cards FROM trades WHERE id=?", reciever)[0][0]
+    trade_cards = trade_cards.to_s.split(", ")
+    reciever_cards = db.execute("SELECT cards FROM users WHERE id=?", user)[0][0].to_s.split(", ")
+    sender_cards = db.execute("SELECT cards FROM users WHERE name=?", offer_sender)[0][0].to_s.split(", ")
+
+    p offer_cards
+    p trade_cards
+
+    sender_cards_update = sender_cards + trade_cards - offer_cards
+    reciever_cards_update = reciever_cards + offer_cards - trade_cards
+
+    p sender_cards_update
+    p sender_cards_update.join(", ")
+    p reciever_cards_update.join(", ")
+    p reciever_cards_update
+
+    db.execute("UPDATE users SET cards=? WHERE name=?", [sender_cards_update.join(", "), offer_sender])
+    db.execute("UPDATE users SET cards=? WHERE id=?", [reciever_cards_update.join(", "), user])
+    db.execute("DELETE FROM offers WHERE id=?", offer)
+    db.execute("DELETE FROM trades WHERE id=?", reciever)
+    db.execute("DELETE FROM user_trade_relation WHERE trade=?", reciever)
+
+    
 end
