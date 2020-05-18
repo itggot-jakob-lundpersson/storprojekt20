@@ -5,11 +5,13 @@ require 'bcrypt'
 require_relative './model.rb'
 enable :sessions
 
+#Display landing page
 get('/') do 
     
     slim(:index)
 end
 
+#Login user
 post('/login') do
     db = connect_db("greed")
     username = params["l_username"]
@@ -36,6 +38,7 @@ post('/login') do
     redirect("/")
 end
 
+#Register user
 post('/register') do 
     db=connect_db("greed")
     username = params["r_username"]
@@ -53,25 +56,28 @@ post('/register') do
     redirect("/users/#{session[:username]}")
 end
 
+#Display registration form
 get('/users/new') do 
     
     slim(:"users/new")
 end
 
 
-
+#Display user page
 get('/users/:username') do
     result = "db.execute"
     
     slim(:"users/show") #, locals:{info:result}
 end
 
+#Display login form
 get('/login') do 
     
     
     slim(:"login")
 end
 
+#Display page showing all cards
 get('/cards/') do
     db = connect_db("greed")
 
@@ -80,24 +86,19 @@ get('/cards/') do
     if user_owns_cards(db, session[:username])
         session[:your_cards] = show_user_cards(db, session[:username])
     end
-    if session[:role] == "admin"
-        
-        
-    else 
-        
-        
-    end
+    
     
     slim(:"cards/index")
 end
 
+#Display card-creation form
 get('/cards/new') do 
     
     
     slim(:"cards/new")
 end
 
-
+#Display all trades
 get('/trades/') do 
     db = connect_db("greed")
     session[:trades] = show_all_trades(db)
@@ -111,18 +112,21 @@ get('/trades/') do
     slim(:"trades/index")
 end
 
+#Display trade creation form
 get('/trades/new') do 
     
     
     slim(:"trades/new")
 end
 
+#Display specific trade
 get('/trades/:show_trade') do
 
 
     slim(:"trades/show")
 end
 
+#Retrieves specific trade, redirect to 'trades/[:show_trade]'
 post('/show_trade') do
     db = connect_db("greed")
     show_trade_id = params["show_trade_id"]
@@ -134,6 +138,7 @@ post('/show_trade') do
     redirect("trades/#{session[:show_trade]}")
 end
 
+#Create trade, redirect to 'trades/new'
 post('/create_trade') do
     db = connect_db("greed")
 
@@ -148,6 +153,7 @@ post('/create_trade') do
     redirect('/trades/new')
 end
 
+#Send offer to trade, redirect to '/trades/'
 post('/join_trade') do
     db = connect_db("greed")
 
@@ -161,6 +167,7 @@ post('/join_trade') do
     redirect('/trades/')
 end
 
+#Accept an offer, redirect to '/trades/'
 post('/accept_offer') do
     db = connect_db("greed")
 
@@ -171,6 +178,7 @@ post('/accept_offer') do
     redirect('/trades/')
 end
 
+#Create new template, redirect to '/users/[:username]'
 post('/create_template') do
     db = connect_db("greed")
     
@@ -195,6 +203,7 @@ post('/create_template') do
     
 end
 
+#Create new cards, redirect to '/cards/new'
 post('/create_cards') do
     db = connect_db("greed")
     name = params["card_name"]

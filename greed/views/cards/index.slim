@@ -1,4 +1,6 @@
-a href = "/cards/new" Create cards
+- if session[:role] == "admin"
+    a href = "/cards/new" Create cards
+
 a href = "/users/#{session[:username]}"  Back
 
 

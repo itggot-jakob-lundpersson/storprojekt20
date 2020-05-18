@@ -3,11 +3,13 @@ require 'slim'
 require 'sqlite3'
 require 'bcrypt'
 
+#Retrieves specific database
 def connect_db(database)
     choice = SQLite3::Database.new("db/#{database}.db")
     return choice
 end
 
+#Inserts params from registration-form into users, using BCrypt on password
 def register_user(db, username, password)
     result = db.execute("SELECT id FROM users WHERE name=?", username)
     if result.empty?
@@ -19,6 +21,7 @@ def register_user(db, username, password)
     return result
 end
 
+#Gets id of user by name
 def retrieve_user_id(db, username)
     
     user_id = db.execute("SELECT ID FROM users WHERE name=?", username)
@@ -26,19 +29,21 @@ def retrieve_user_id(db, username)
     return user_id
 end
 
+#Gets password hash of user by name
 def retrieve_user_password(db, username)
     password_hash = db.execute("SELECT password FROM users WHERE name=?", username)
     
     return password_hash.first
 end
 
+#Gets role of user by id
 def retrieve_role(db, user_id)
     result = db.execute("SELECT role FROM users WHERE id=?", user_id)
     
     return result
 end
 
-
+#Verifies stored password against password hash
 def password_verification(password_hash, password)
     
     if BCrypt::Password.new(password_hash.first) == password
@@ -51,6 +56,7 @@ def password_verification(password_hash, password)
     return verification
 end
 
+#Verifies that template with specified name does not exist
 def template_name_validation(db, template_name)
     exists = db.execute("SELECT name FROM template WHERE name=?", template_name)
     
@@ -67,12 +73,15 @@ def template_name_validation(db, template_name)
     return result
 end
 
+#Creates a new template by inserting the relevant information
 def create_template(db, template_name, rarity, description, tags, collection, image_link)
     db.execute("INSERT INTO template(name, rarity, description, tag, collection, image) VALUES (?,?,?,?,?,?)", [template_name, rarity, description, tags, collection, image_link])
     
     
 end
 
+
+#Creates a number of cards of specified existing template, updates specified user to own these cards
 def create_cards(db, template_name, card_amount, owner)
     old_amount = db.execute("SELECT amount FROM template where name=?", [template_name])
     new_card_amount = card_amount.to_i + old_amount[0][0].to_i
@@ -99,11 +108,13 @@ def create_cards(db, template_name, card_amount, owner)
     
 end
 
+#Retrieves all from template-table in database
 def show_all_cards(db)
     
     return db.execute("SELECT * FROM template")
 end
 
+#Retrieves all cards owned by specified user, sorts cards into amounts of respective templates
 def show_user_cards(db, username)
     owned_cards = db.execute("SELECT cards FROM users WHERE name=?", username)
     if owned_cards[0][0] != nil
@@ -142,6 +153,7 @@ def show_user_cards(db, username)
     return owned_templates
 end
 
+#Inserts relevant information into trade-table, 
 def create_trade(db, cards, name, users, expiration)
     
     db.execute("INSERT INTO trades(cards, name, sender, expiration) VALUES (?,?,?,?)", [cards, name, users, expiration])
@@ -150,16 +162,20 @@ def create_trade(db, cards, name, users, expiration)
     db.execute("INSERT INTO user_trade_relation(user, trade) VALUES (?,?)", [user_id, trade_id])
 end
 
+#Retrieves all trades
 def show_all_trades(db)
     return db.execute("SELECT * FROM trades")
 
 end
 
+#Retrieves all trades belonging to user
 def show_user_trades(db, username)
     return db.execute("SELECT * FROM trades WHERE sender=?", username) 
 
 end
 
+
+#Retrieves all offers a specified user has made
 def show_user_offers(db, username)
     user_trades = db.execute("SELECT id FROM trades WHERE sender=?", username)
     list = []
@@ -178,6 +194,7 @@ def show_user_offers(db, username)
 
 end
 
+#Verifies wether user owns any cards
 def user_owns_cards(db, username)
 
     does = false
@@ -188,6 +205,7 @@ def user_owns_cards(db, username)
     return does
 end
 
+#Verifies wether user owns trade
 def trade_ownership_verified(db, cards, user)
     result = false
     owned_cards = db.execute("SELECT cards FROM users WHERE name=?", user)[0][0]
@@ -201,14 +219,14 @@ def trade_ownership_verified(db, cards, user)
     return result
 end
 
-
+#Retrieves trade name by id
 def get_trade_name(db, trade_id)
     result = db.execute("SELECT name FROM trades WHERE id=?", trade_id)
 
     return result
 end
 
-
+#Retrieves all of trade by id
 def get_trade(db, trade_id)
 
     result = db.execute("SELECT * FROM trades WHERE id=?", trade_id)
@@ -216,6 +234,7 @@ def get_trade(db, trade_id)
     return result
 end
 
+#Verifies wether user has trades
 def has_trades(db, username)
     result = false
     if db.execute("SELECT * FROM trades WHERE sender=?", username) != []
@@ -226,6 +245,7 @@ def has_trades(db, username)
 
 end
 
+#Creates offer by inserting relevant info, connects user to trade by inserting user id into user-trade-relation-table
 def join_trade(db, cards, user, reciever_trade)
     user_id = retrieve_user_id(db, user)[0][0]
     db.execute("INSERT INTO offers(cards, sender, reciever) VALUES(?,?,?)", [cards, user, reciever_trade])
@@ -233,6 +253,7 @@ def join_trade(db, cards, user, reciever_trade)
 
 end
 
+#Verifies wether trades have offers
 def trades_have_offers(db, trade_id)
     result = false
     p trade_id
@@ -249,7 +270,9 @@ def trades_have_offers(db, trade_id)
     return result
 end
 
-def accept_offer(db, offer, user) #Fixa med inerjoin?
+
+#Tranfers cards between users according to specified offer, updates ownership, deletes trade and offers
+def accept_offer(db, offer, user)
 
     offer_cards = db.execute("SELECT cards FROM offers WHERE id=?", offer)[0][0].split(", ")
     offer_sender = db.execute("SELECT sender FROM offers WHERE id=?", offer)[0][0]
