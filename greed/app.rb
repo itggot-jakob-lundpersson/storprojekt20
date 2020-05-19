@@ -108,6 +108,8 @@ get('/trades/') do
             p "have offers"
             session[:user_offers] = show_user_offers(db, session[:username])
         end
+    else 
+        session[:user_trades] = []
     end
     slim(:"trades/index")
 end
@@ -174,6 +176,7 @@ post('/accept_offer') do
     offer_id = params["offer_id"]
     user = session[:user_id]
     accept_offer(db, offer_id, user)
+    session[:user_offers] = show_user_offers(db, session[:username])
 
     redirect('/trades/')
 end
